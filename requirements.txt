@@ -1,0 +1,11 @@
+# Core dependencies
+langchain>=0.1.0
+langchain-anthropic>=0.1.0
+langgraph>=0.0.20
+
+# Persistence
+aiosqlite>=0.19.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
