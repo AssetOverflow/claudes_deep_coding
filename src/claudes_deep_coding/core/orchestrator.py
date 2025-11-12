@@ -6,11 +6,11 @@ from typing import Any, Dict, List, Optional
 import asyncio
 from datetime import datetime
 
-from .base import BaseAgent
-from .researcher import ResearcherAgent
-from .generator import GeneratorAgent
-from .tester import TesterAgent
-from .refiner import RefinerAgent
+from ..agents.base import BaseAgent
+from ..agents.researcher import ResearcherAgent
+from ..agents.generator import GeneratorAgent
+from ..agents.tester import TesterAgent
+from ..agents.refiner import RefinerAgent
 from ..core.planner import TodoPlanner, Task, TaskPriority, TaskStatus
 from ..middleware.subagent import SubAgentMiddleware, MessageType, AgentMessage
 from ..persistence.store import FilesystemPersistence
@@ -98,8 +98,12 @@ class CodeOrchestrator(BaseAgent):
                 await self._save_workflow_state()
             
             await self.on_task_complete(task_id, result)
+            
+            # Determine if workflow was successful
+            workflow_success = result.get("overall_status") == "completed"
+            
             return {
-                "success": True,
+                "success": workflow_success,
                 "task_id": task_id,
                 "workflow_id": self.workflow_id,
                 "result": result
@@ -337,7 +341,7 @@ class CodeOrchestrator(BaseAgent):
             "workflow_id": self.workflow_id,
             "planner_state": {
                 "tasks": {
-                    task_id: task.model_dump()
+                    task_id: task.model_dump(mode='json')
                     for task_id, task in self.planner.tasks.items()
                 },
                 "progress": self.planner.get_progress_summary()
