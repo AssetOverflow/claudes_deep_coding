@@ -1,10 +1,13 @@
-# Direct dependencies
-neo4j>=5.14.0
-graphiti-core>=0.3.0
+chromadb>=0.4.22
 langchain>=0.1.0
 langchain-anthropic>=0.1.0
+langchain-community>=0.0.20
+anthropic>=0.18.0
 python-dotenv>=1.0.0
 pydantic>=2.0.0
-pydantic-settings>=2.0.0
 
-# Development dependencies (install with: pip install -r requirements-dev.txt)
+# Development dependencies
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+ruff>=0.1.0

@@ -1,1 +1,1 @@
-"""Tests for Claudes Deep Coding."""
+"""Tests for deepagents."""

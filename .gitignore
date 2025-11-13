@@ -218,3 +218,10 @@ neo4j_logs/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ChromaDB
+chroma_db/
+*.chroma
+
+# Environment files
+.env

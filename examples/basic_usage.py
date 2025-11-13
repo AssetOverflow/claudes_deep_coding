@@ -1,129 +1,142 @@
+#!/usr/bin/env python3
 """
-Example usage of the Deep Agent with knowledge graph integration.
+Example demonstrating ChromaDB memory usage for deepagents.
 
-This example demonstrates how to:
-1. Initialize a deep agent
-2. Set up a project
-3. Process conversations
-4. Query the knowledge graph
+This script shows how to:
+1. Initialize the ChromaDB memory system
+2. Store code snippets, tasks, and error solutions
+3. Query the memory for relevant information
 """
 
-import asyncio
 import logging
-from deepagents import DeepAgent, DeepAgentConfig
+from pathlib import Path
+
+from deepagents.config import config
+from deepagents.memory import ChromaMemoryManager, CodingMemory
+from deepagents.utils import format_code_context, format_task_summary
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-
 logger = logging.getLogger(__name__)
 
 
-async def main():
-    """Main example function."""
+def main():
+    """Run the example demonstration."""
+    logger.info("=== ChromaDB Memory Demo for Deepagents ===\n")
 
-    # Initialize the deep agent
-    logger.info("Initializing deep agent...")
-    config = DeepAgentConfig()
-    agent = DeepAgent(config=config)
+    # Initialize ChromaDB manager
+    logger.info("Initializing ChromaDB...")
+    chroma_manager = ChromaMemoryManager(
+        persist_directory=config.chromadb.persist_directory,
+        collection_name=config.chromadb.collection_name,
+    )
 
-    try:
-        # Initialize the agent
-        await agent.initialize()
-        logger.info("Agent initialized successfully")
+    # Initialize coding memory
+    coding_memory = CodingMemory(chroma_manager)
 
-        # Set up a project
-        project_id = await agent.set_project(
-            project_name="example_project",
-            description="An example Python project for testing the deep agent",
-        )
-        logger.info(f"Project created with ID: {project_id}")
+    # Example 1: Store code snippets
+    logger.info("\n--- Example 1: Storing Code Snippets ---")
 
-        # Simulate a conversation about code
-        conversations = [
-            {
-                "message": "I'm working on a Python web application using FastAPI",
-                "context": {"language": "python", "framework": "fastapi"},
-            },
-            {
-                "message": "I need to create a user authentication system with JWT tokens",
-                "context": {"feature": "authentication", "technology": "jwt"},
-            },
-            {
-                "message": "The authentication should support OAuth2 password flow",
-                "context": {"auth_type": "oauth2", "flow": "password"},
-            },
-        ]
+    snippet1_id = coding_memory.store_code_snippet(
+        code="""
+def fibonacci(n: int) -> int:
+    '''Calculate the nth Fibonacci number using recursion.'''
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+""",
+        language="python",
+        description="Recursive Fibonacci implementation",
+        tags=["algorithm", "recursion", "fibonacci"],
+        file_path="algorithms/fibonacci.py",
+    )
+    logger.info(f"Stored snippet 1: {snippet1_id}")
 
-        # Process each conversation
-        for conv in conversations:
-            logger.info(f"Processing message: {conv['message'][:50]}...")
-            response = await agent.process_message(
-                message=conv["message"], context=conv.get("context")
-            )
-            logger.info(f"Response received at: {response['timestamp']}")
+    snippet2_id = coding_memory.store_code_snippet(
+        code="""
+async def fetch_data(url: str) -> dict:
+    '''Fetch JSON data from an API endpoint.'''
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
+""",
+        language="python",
+        description="Async function to fetch data from API",
+        tags=["async", "http", "api"],
+        file_path="utils/api.py",
+    )
+    logger.info(f"Stored snippet 2: {snippet2_id}")
 
-        # Add some code entities
-        logger.info("Adding code entities to knowledge graph...")
+    # Example 2: Store task context
+    logger.info("\n--- Example 2: Storing Task Context ---")
 
-        await agent.knowledge_graph.add_code_entity(
-            entity_type="File",
-            name="main.py",
-            properties={
-                "path": "/src/main.py",
-                "language": "python",
-                "description": "Main application entry point",
-            },
-        )
+    task1_id = coding_memory.store_task_context(
+        task_description="Implemented user authentication system with JWT tokens",
+        task_type="feature",
+        files_involved=["auth/jwt.py", "middleware/auth.py", "models/user.py"],
+        dependencies=["pyjwt", "passlib"],
+        outcomes="Successfully added JWT-based authentication with password hashing",
+    )
+    logger.info(f"Stored task 1: {task1_id}")
 
-        await agent.knowledge_graph.add_code_entity(
-            entity_type="Class",
-            name="UserAuthService",
-            properties={
-                "file": "main.py",
-                "description": "Handles user authentication",
-                "methods": ["login", "logout", "refresh_token"],
-            },
-            relationships=[{"target_name": "main.py", "relationship_type": "DEFINED_IN"}],
-        )
+    # Example 3: Store error solutions
+    logger.info("\n--- Example 3: Storing Error Solutions ---")
 
-        await agent.knowledge_graph.add_code_entity(
-            entity_type="Function",
-            name="create_access_token",
-            properties={
-                "file": "main.py",
-                "description": "Creates JWT access tokens",
-                "parameters": ["user_id", "expires_delta"],
-            },
-            relationships=[{"target_name": "UserAuthService", "relationship_type": "USED_BY"}],
-        )
+    error1_id = coding_memory.store_error_solution(
+        error_message="ModuleNotFoundError: No module named 'chromadb'",
+        solution="Install chromadb using: pip install chromadb",
+        error_type="dependency",
+        language="python",
+    )
+    logger.info(f"Stored error solution 1: {error1_id}")
 
-        # Search the knowledge graph
-        logger.info("Searching knowledge graph...")
-        search_results = await agent.search_knowledge(query="authentication JWT tokens", limit=5)
-        logger.info(f"Found {len(search_results)} results")
+    # Example 4: Query for similar code
+    logger.info("\n--- Example 4: Querying for Similar Code ---")
 
-        # Get project summary
-        logger.info("Getting project summary...")
-        summary = await agent.get_project_summary()
-        logger.info(f"Project: {summary['project']}")
-        logger.info(f"Stats: {summary['stats']}")
-        logger.info(f"Conversation messages: {summary['conversation_length']}")
+    results = coding_memory.find_similar_code(
+        query="how to implement a recursive algorithm",
+        n_results=2,
+    )
 
-        # Display knowledge graph stats
-        stats = agent.neo4j_manager.get_stats()
-        logger.info(
-            f"Knowledge Graph - Nodes: {stats['nodes']}, Relationships: {stats['relationships']}"
-        )
+    logger.info(f"Found {len(results)} similar code snippets")
+    print(format_code_context(results))
 
-    except Exception as e:
-        logger.error(f"Error in example: {e}", exc_info=True)
-    finally:
-        # Clean up
-        await agent.close()
-        logger.info("Agent closed")
+    # Example 5: Query for similar tasks
+    logger.info("\n--- Example 5: Querying for Similar Tasks ---")
+
+    task_results = coding_memory.find_similar_tasks(
+        query="authentication implementation",
+        n_results=2,
+    )
+
+    logger.info(f"Found {len(task_results)} similar tasks")
+    print(format_task_summary(task_results))
+
+    # Example 6: Query for error solutions
+    logger.info("\n--- Example 6: Querying for Error Solutions ---")
+
+    error_results = coding_memory.find_error_solutions(
+        error_query="module not found error",
+        n_results=2,
+    )
+
+    logger.info(f"Found {len(error_results)} similar error solutions")
+    for i, result in enumerate(error_results, 1):
+        print(f"\n--- Solution {i} ---")
+        print(result["document"])
+
+    # Show memory statistics
+    logger.info(f"\n--- Memory Statistics ---")
+    logger.info(f"Total items in memory: {chroma_manager.count()}")
+
+    logger.info("\n=== Demo Complete ===")
+    logger.info(
+        "The ChromaDB data has been persisted and will be available in future runs."
+    )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

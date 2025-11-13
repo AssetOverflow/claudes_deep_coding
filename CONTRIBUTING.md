@@ -1,184 +1,310 @@
 # Contributing to Claudes Deep Coding
 
-Thank you for your interest in contributing to Claudes Deep Coding! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to the Claudes Deep Coding project! This document provides guidelines and instructions for contributing.
+
+## Getting Started
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/claudes_deep_coding.git`
+3. Create a new branch: `git checkout -b feature/your-feature-name`
+4. Make your changes
+5. Test your changes
+6. Commit and push
+7. Open a Pull Request
 
 ## Development Setup
 
-1. Fork the repository
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/claudes_deep_coding.git
-   cd claudes_deep_coding
-   ```
-
-3. Install development dependencies:
-   ```bash
-   pip install -e ".[dev]"
-   # or
-   pip install -r requirements-dev.txt
-   ```
-
-4. Start Neo4j:
-   ```bash
-   docker-compose up -d
-   ```
-
-5. Create a `.env` file:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
-
-## Code Style
-
-We use:
-- **Black** for code formatting (line length: 100)
-- **Ruff** for linting
-- **mypy** for type checking
-
-Before submitting a PR, run:
+### Install Dependencies
 
 ```bash
-# Format code
-black deepagents/ tests/ examples/
+# Install in development mode
+pip install -e ".[dev]"
 
-# Lint
-ruff check deepagents/ tests/ examples/
+# Or using requirements.txt
+pip install -r requirements.txt
+```
 
-# Type check
-mypy deepagents/
+### Environment Setup
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and add your API keys
+# ANTHROPIC_API_KEY=your_key_here
+```
+
+## Code Standards
+
+### Python Style Guide
+
+We follow PEP 8 with some modifications:
+- Maximum line length: 100 characters
+- Use double quotes for strings
+- Use type hints where appropriate
+
+### Code Formatting
+
+Format your code with Black:
+```bash
+black src/ tests/ examples/
+```
+
+### Linting
+
+Check your code with Ruff:
+```bash
+ruff check src/ tests/ examples/
+```
+
+### Type Checking
+
+We encourage (but don't require) type hints:
+```python
+def store_code_snippet(
+    self,
+    code: str,
+    language: str,
+    description: str,
+    tags: Optional[List[str]] = None,
+) -> str:
+    ...
 ```
 
 ## Testing
 
-We use pytest for testing. Write tests for all new features.
+### Running Tests
 
-Run tests:
 ```bash
-# All tests
+# Run all tests
 pytest
 
-# With coverage
+# Run with coverage
 pytest --cov=deepagents --cov-report=html
 
-# Specific test file
-pytest tests/test_deepagent.py
+# Run specific test file
+pytest tests/test_memory.py
 
-# Specific test
-pytest tests/test_deepagent.py::test_deep_agent_init
+# Run specific test
+pytest tests/test_memory.py::TestCodingMemory::test_store_code_snippet
 ```
 
-### Test Guidelines
+### Writing Tests
 
-- Use descriptive test names
+- Place tests in the `tests/` directory
+- Name test files `test_*.py`
+- Name test functions `test_*`
+- Use fixtures for common setup
 - Test both success and failure cases
-- Mock external dependencies (Neo4j, LLM calls)
-- Use pytest fixtures for common setups
-- Aim for >80% code coverage
+
+Example:
+```python
+def test_store_code_snippet(coding_memory, chroma_manager):
+    """Test storing a code snippet."""
+    snippet_id = coding_memory.store_code_snippet(
+        code="def test(): pass",
+        language="python",
+        description="Test function",
+    )
+    
+    assert snippet_id.startswith("code_")
+    assert chroma_manager.count() == 1
+```
+
+## Documentation
+
+### Docstrings
+
+Use Google-style docstrings:
+
+```python
+def find_similar_code(
+    self,
+    query: str,
+    language: Optional[str] = None,
+    n_results: int = 5,
+) -> List[Dict[str, Any]]:
+    """
+    Find similar code snippets.
+
+    Args:
+        query: Query string describing what to look for
+        language: Optional filter by programming language
+        n_results: Number of results to return
+
+    Returns:
+        List of similar code snippets with metadata
+
+    Raises:
+        ValueError: If query is empty
+    """
+```
+
+### Comments
+
+- Write self-documenting code when possible
+- Add comments for complex logic
+- Explain *why*, not *what*
+
+Good comment:
+```python
+# Use batch operations for better performance with large datasets
+chroma_manager.add_memory(documents=documents, metadatas=metadatas)
+```
+
+Poor comment:
+```python
+# Add documents to memory
+chroma_manager.add_memory(documents=documents, metadatas=metadatas)
+```
+
+### Documentation Files
+
+- Keep README.md up to date
+- Update relevant .md files in the docs
+- Add examples for new features
 
 ## Pull Request Process
 
-1. Create a new branch for your feature:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+### Before Submitting
 
-2. Make your changes and commit:
-   ```bash
-   git add .
-   git commit -m "Add: brief description of changes"
-   ```
-
-3. Write or update tests
-
-4. Ensure all tests pass and code is formatted:
-   ```bash
-   pytest
-   black deepagents/ tests/ examples/
-   ruff check deepagents/ tests/ examples/
-   ```
-
-5. Push to your fork:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-6. Open a Pull Request on GitHub
+1. ✅ Run tests: `pytest`
+2. ✅ Format code: `black src/ tests/ examples/`
+3. ✅ Lint code: `ruff check src/ tests/ examples/`
+4. ✅ Update documentation
+5. ✅ Add/update tests for new features
+6. ✅ Update CHANGELOG.md if applicable
 
 ### PR Guidelines
 
-- Provide a clear description of the changes
-- Reference any related issues
-- Include tests for new functionality
-- Update documentation if needed
-- Keep PRs focused on a single feature/fix
+- **Title**: Clear, descriptive title
+- **Description**: Explain what and why
+- **Link issues**: Reference related issues
+- **Small PRs**: Keep changes focused
+- **Tests**: Include tests for new features
+- **Documentation**: Update docs as needed
 
-## Commit Message Format
+Example PR description:
+```markdown
+## Description
+Adds support for batch operations in ChromaMemoryManager to improve performance when storing large numbers of code snippets.
 
-Use clear, descriptive commit messages:
+## Changes
+- Added `add_batch()` method to ChromaMemoryManager
+- Updated CodingMemory to use batch operations when appropriate
+- Added tests for batch operations
+- Updated documentation
 
-```
-Add: new feature or functionality
-Fix: bug fix
-Update: changes to existing features
-Docs: documentation changes
-Test: test additions or changes
-Refactor: code refactoring
-```
+## Related Issues
+Fixes #123
 
-Examples:
-- `Add: support for custom Neo4j databases`
-- `Fix: connection timeout in Neo4jManager`
-- `Update: improve search performance`
-- `Docs: add example for multi-project setup`
-
-## Code Organization
-
-```
-deepagents/
-├── __init__.py          # Package exports
-├── config.py            # Configuration management
-├── neo4j_manager.py     # Neo4j connection handling
-├── knowledge_graph.py   # Knowledge graph operations
-└── deepagent.py         # Main agent implementation
-
-tests/
-├── test_config.py
-├── test_neo4j_manager.py
-├── test_knowledge_graph.py
-└── test_deepagent.py
-
-examples/
-├── basic_usage.py
-└── advanced_analysis.py
+## Testing
+- [ ] Added unit tests
+- [ ] Tested with 1000+ documents
+- [ ] Verified backward compatibility
 ```
 
-## Adding New Features
+## Feature Requests
 
-When adding new features:
+We welcome feature requests! Please:
 
-1. **Design First**: Open an issue to discuss the feature
-2. **Documentation**: Update README and docstrings
-3. **Tests**: Write comprehensive tests
-4. **Examples**: Add usage examples if applicable
-5. **Type Hints**: Use type hints for all functions
-6. **Logging**: Add appropriate logging statements
+1. Check if the feature already exists
+2. Search existing issues
+3. Create a new issue with:
+   - Clear description
+   - Use cases
+   - Expected behavior
+   - Example code (if applicable)
 
-## Issues and Bug Reports
+## Bug Reports
 
-When reporting issues:
+When reporting bugs, please include:
 
-- Use a clear, descriptive title
-- Provide steps to reproduce
-- Include error messages and stack traces
-- Specify your environment (OS, Python version, etc.)
-- Mention Neo4j version if relevant
+1. **Description**: What happened vs. what you expected
+2. **Environment**: Python version, OS, package versions
+3. **Reproduction**: Steps to reproduce
+4. **Code**: Minimal code example
+5. **Error**: Full error message/traceback
 
-## Questions?
+Example:
+```markdown
+## Bug Description
+ChromaMemoryManager fails to initialize when persist_directory doesn't exist
 
-- Open an issue with the `question` label
-- Check existing issues and documentation first
+## Environment
+- Python: 3.10.5
+- OS: Ubuntu 22.04
+- chromadb: 0.4.22
+
+## Steps to Reproduce
+1. Set CHROMA_PERSIST_DIRECTORY to non-existent path
+2. Initialize ChromaMemoryManager
+3. Error occurs
+
+## Code Example
+\```python
+manager = ChromaMemoryManager(
+    persist_directory=Path("/non/existent/path"),
+)
+\```
+
+## Error
+\```
+FileNotFoundError: /non/existent/path does not exist
+\```
+
+## Expected Behavior
+Should create the directory automatically
+```
+
+## Code Review
+
+We review all PRs. Expect:
+- Constructive feedback
+- Requests for changes
+- Discussion on approach
+
+Please:
+- Be patient
+- Be respectful
+- Address feedback
+- Ask questions if unclear
+
+## Areas for Contribution
+
+### High Priority
+- Additional embedding function support
+- Performance optimizations
+- More comprehensive tests
+- Documentation improvements
+
+### Good First Issues
+- Add type hints to existing code
+- Improve error messages
+- Add examples for specific use cases
+- Documentation fixes
+
+### Advanced Features
+- LangChain integration examples
+- Support for multiple vector stores
+- Agent workflow templates
+- Performance benchmarking tools
+
+## Community
+
+- Be respectful and inclusive
+- Help others
+- Share knowledge
+- Collaborate openly
 
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+
+## Questions?
+
+- Open an issue for technical questions
+- Use discussions for general questions
+- Check existing issues and PRs first
+
+Thank you for contributing! 🎉
