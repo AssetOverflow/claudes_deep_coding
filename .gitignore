@@ -26,6 +26,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Claude's Deep Coding state directories
+.claudes_state/
+.example_state/
+.custom_workflow_state/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -180,6 +185,14 @@ cython_debug/
 # Ignore directories containing user credentials, local state, and settings.
 # Learn more at https://abstra.io/docs
 .abstra/
+
+# Neo4j data
+neo4j_data/
+neo4j_logs/
+
+# Environment files
+.env
+!.env.example
 
 # Visual Studio Code
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
