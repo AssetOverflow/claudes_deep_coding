@@ -186,6 +186,14 @@ cython_debug/
 # Learn more at https://abstra.io/docs
 .abstra/
 
+# Neo4j data
+neo4j_data/
+neo4j_logs/
+
+# Environment files
+.env
+!.env.example
+
 # Visual Studio Code
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore

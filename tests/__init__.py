@@ -1,1 +1,1 @@
-"""Tests package for claudes_deep_coding."""
+"""Tests for Claudes Deep Coding."""

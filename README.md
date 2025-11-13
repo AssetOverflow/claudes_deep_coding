@@ -1,324 +1,305 @@
-# Claude's Deep Coding
+# Claudes Deep Coding
 
-A hierarchical AI agent system built with LangChain's DeepAgents architecture, designed around Claude-Code-style agents and subagents for deep, production-grade coding workflows.
+The infamous LangChain-AI based deepagents designed around Claude Code agents/sub-agents for deeper work and coding assistance, now with **dynamic knowledge graph integration** using Neo4j and Graphiti.
 
 ## Overview
 
-**Claude's Deep Coding** implements a sophisticated multi-agent system that orchestrates complex code workflows through specialized subagents. The system features:
+Claudes Deep Coding provides a framework for building intelligent coding agents that maintain dynamic knowledge graphs of your projects and conversations. The knowledge graph is dynamically created and updated by deepagents powered by Claude, enabling deeper understanding of codebases and more contextual assistance.
 
-- 🎯 **Hierarchical Architecture**: Main orchestrator delegating to specialized subagents
-- 📋 **Todo Planner**: Intelligent task planning with dependency tracking
-- 💾 **Filesystem Persistence**: State management and workflow history
-- 🔄 **SubAgent Middleware**: Seamless communication between agents
-- 🤖 **Four Specialized Agents**: Each handling specific aspects of the development workflow
+### Key Features
+
+- 🧠 **Dynamic Knowledge Graph**: Automatically builds and maintains a knowledge graph of your projects
+- 🤖 **LLM-Powered Analysis**: Uses Claude to understand code and conversations
+- 📊 **Neo4j Integration**: Persistent graph database for complex relationship queries
+- 🔄 **Graphiti Integration**: Advanced knowledge graph management
+- 🎯 **Context-Aware**: Maintains conversation history and project context
+- 🔍 **Smart Search**: Query your knowledge graph with natural language
+- 📈 **Adaptive Learning**: Knowledge graph evolves with your conversations
 
 ## Architecture
 
-### Core Components
-
-1. **Code Orchestrator** - Main agent that manages the overall workflow
-2. **Todo Planner** - Hierarchical task management with dependency tracking
-3. **Filesystem Persistence** - SQLite-based state persistence
-4. **SubAgent Middleware** - Message routing and delegation system
-
-### Specialized Subagents
-
-#### 🔍 Researcher Agent
-Handles discovery and analysis:
-- Code exploration and analysis
-- API and library research
-- Requirements gathering
-- Technology stack investigation
-- Architecture exploration
-
-#### 🏗️ Generator Agent
-Handles code creation:
-- Code generation
-- Module creation
-- Template instantiation
-- Boilerplate generation
-- Scaffold creation
-
-#### 🧪 Tester Agent
-Handles validation and quality:
-- Unit testing
-- Integration testing
-- Code validation
-- Quality assurance
-- Performance testing
-
-#### ✨ Refiner Agent
-Handles optimization:
-- Code optimization
-- Performance tuning
-- Refactoring
-- Production hardening
-- Documentation enhancement
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        DeepAgent                            │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │          Claude LLM (Conversation Analysis)          │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            ▼                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │         Knowledge Graph Manager (Graphiti)           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            ▼                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │          Neo4j Database (Graph Storage)              │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Installation
 
+### Prerequisites
+
+- Python 3.10 or higher
+- Docker (for Neo4j)
+- Neo4j 5.14+ (can be run via Docker)
+
+### Setup
+
+1. Clone the repository:
 ```bash
-# Clone the repository
 git clone https://github.com/AssetOverflow/claudes_deep_coding.git
 cd claudes_deep_coding
+```
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Or install in development mode
+2. Install dependencies:
+```bash
 pip install -e .
 ```
 
+For development with testing tools:
+```bash
+pip install -e ".[dev]"
+```
+
+3. Start Neo4j using Docker:
+```bash
+docker-compose up -d
+```
+
+This will start Neo4j with:
+- HTTP interface: http://localhost:7474
+- Bolt connection: bolt://localhost:7687
+- Default credentials: neo4j/deepcoding123
+
+4. Configure environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your settings
+```
+
+Required environment variables:
+- `NEO4J_URI`: Neo4j connection URI (default: bolt://localhost:7687)
+- `NEO4J_USERNAME`: Neo4j username (default: neo4j)
+- `NEO4J_PASSWORD`: Neo4j password
+- `ANTHROPIC_API_KEY`: Your Anthropic API key (optional, for Claude integration)
+
 ## Quick Start
 
-### Basic Workflow
+### Basic Usage
 
 ```python
 import asyncio
-from claudes_deep_coding import CodeOrchestrator
+from deepagents import DeepAgent
 
 async def main():
-    # Initialize the orchestrator
-    orchestrator = CodeOrchestrator(
-        persistence_path=".claudes_state",
-        enable_persistence=True
+    # Initialize the agent
+    agent = DeepAgent()
+    await agent.initialize()
+    
+    # Set up a project
+    await agent.set_project(
+        project_name="my_awesome_project",
+        description="A web application using FastAPI"
     )
     
-    # Define a coding task
-    task = {
-        "task_id": "my_task",
-        "workflow_type": "standard",
-        "description": "Create a Python module for data validation",
-        "requirements": [
-            "Input validation functions",
-            "Type checking",
-            "Error handling",
-            "Comprehensive tests"
-        ]
+    # Process a conversation
+    response = await agent.process_message(
+        message="I need to implement user authentication",
+        context={"feature": "auth", "framework": "fastapi"}
+    )
+    
+    # Search the knowledge graph
+    results = await agent.search_knowledge("authentication patterns")
+    
+    # Get project summary
+    summary = await agent.get_project_summary()
+    print(f"Nodes: {summary['stats']['nodes']}")
+    print(f"Relationships: {summary['stats']['relationships']}")
+    
+    await agent.close()
+
+asyncio.run(main())
+```
+
+### Adding Code Entities
+
+```python
+# Add a file entity
+await agent.knowledge_graph.add_code_entity(
+    entity_type="File",
+    name="auth.py",
+    properties={
+        "path": "/src/auth.py",
+        "language": "python"
     }
-    
-    # Execute the workflow
-    result = await orchestrator.execute_task(task)
-    
-    # Check results
-    if result['success']:
-        print(f"Workflow completed successfully!")
-        print(f"Workflow ID: {result['workflow_id']}")
-    else:
-        print(f"Workflow failed: {result['error']}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Custom Workflow
-
-```python
-from claudes_deep_coding.core.orchestrator import CodeOrchestrator
-from claudes_deep_coding.core.planner import TaskPriority
-
-async def custom_workflow():
-    orchestrator = CodeOrchestrator()
-    
-    # Create custom tasks with dependencies
-    research = orchestrator.planner.create_task(
-        title="Research API Design",
-        description="Research REST API best practices",
-        priority=TaskPriority.HIGH,
-        metadata={"phase": "research", "agent": "researcher"}
-    )
-    
-    generate = orchestrator.planner.create_task(
-        title="Generate API Code",
-        description="Create API endpoints",
-        priority=TaskPriority.HIGH,
-        dependencies=[research.id],
-        metadata={"phase": "generation", "agent": "generator"}
-    )
-    
-    # Execute custom workflow
-    workflow_plan = {
-        "workflow_id": orchestrator.workflow_id,
-        "workflow_type": "custom",
-        "phases": [research, generate]
-    }
-    
-    result = await orchestrator._execute_workflow(workflow_plan)
-    return result
-
-asyncio.run(custom_workflow())
-```
-
-## Workflow Phases
-
-The standard workflow follows a four-phase approach:
-
-1. **Research Phase** (Researcher Agent)
-   - Analyzes requirements
-   - Discovers relevant APIs and libraries
-   - Examines existing code patterns
-
-2. **Generation Phase** (Generator Agent)
-   - Creates code based on research findings
-   - Generates modules, functions, and classes
-   - Produces initial implementation
-
-3. **Testing Phase** (Tester Agent)
-   - Validates generated code
-   - Runs unit and integration tests
-   - Ensures quality standards
-
-4. **Refinement Phase** (Refiner Agent)
-   - Optimizes code performance
-   - Refactors for maintainability
-   - Hardens for production deployment
-
-## Features
-
-### Todo Planner
-
-The planner manages tasks with:
-- Priority levels (Critical, High, Medium, Low)
-- Dependency tracking
-- Status management (Pending, In Progress, Completed, Failed)
-- Progress metrics and summaries
-
-```python
-# Create a task
-task = orchestrator.planner.create_task(
-    title="Implement Feature X",
-    description="Add new feature with tests",
-    priority=TaskPriority.HIGH,
-    dependencies=["task_1", "task_2"]
 )
 
-# Get next available task
-next_task = orchestrator.planner.get_next_task()
-
-# Check progress
-progress = orchestrator.planner.get_progress_summary()
-print(f"Completion: {progress['completion_percentage']}%")
-```
-
-### Persistence Layer
-
-State is automatically persisted to SQLite:
-- Agent states
-- Task history
-- Workflow logs
-
-```python
-# Persistence is automatic when enabled
-orchestrator = CodeOrchestrator(
-    persistence_path=".my_state",
-    enable_persistence=True
-)
-
-# Manually save state
-await orchestrator._save_workflow_state()
-
-# Access persistence directly
-await orchestrator.persistence.log_workflow_event(
-    workflow_id="my_workflow",
-    event_type="custom_event",
-    event_data={"key": "value"}
-)
-```
-
-### SubAgent Middleware
-
-Handles inter-agent communication:
-- Message routing
-- Task delegation
-- Status updates
-- Request/response correlation
-
-```python
-# Send message between agents
-await orchestrator.middleware.send_message(
-    from_agent="orchestrator",
-    to_agent="researcher",
-    message_type=MessageType.TASK_ASSIGNMENT,
-    payload={"task": "research_data"}
-)
-
-# Broadcast status
-await orchestrator.middleware.broadcast_status(
-    agent_id="generator",
-    status_data={"progress": 50}
+# Add a class with relationships
+await agent.knowledge_graph.add_code_entity(
+    entity_type="Class",
+    name="UserService",
+    properties={
+        "description": "Handles user operations"
+    },
+    relationships=[
+        {"target_name": "auth.py", "relationship_type": "DEFINED_IN"}
+    ]
 )
 ```
 
 ## Examples
 
-Check out the `src/claudes_deep_coding/examples/` directory for:
+Check out the `examples/` directory for more detailed examples:
 
-- `basic_workflow.py` - Standard workflow execution
-- `custom_workflow.py` - Custom task creation and execution
+- `basic_usage.py`: Simple demonstration of core features
+- `advanced_analysis.py`: Analyzing an entire codebase and building a comprehensive knowledge graph
 
 Run examples:
 ```bash
-python -m claudes_deep_coding.examples.basic_workflow
-python -m claudes_deep_coding.examples.custom_workflow
-```
-
-## Project Structure
-
-```
-claudes_deep_coding/
-├── src/
-│   └── claudes_deep_coding/
-│       ├── __init__.py
-│       ├── core/
-│       │   ├── orchestrator.py    # Main orchestrator agent
-│       │   └── planner.py         # Todo planner
-│       ├── agents/
-│       │   ├── base.py            # Base agent class
-│       │   ├── researcher.py      # Research agent
-│       │   ├── generator.py       # Code generation agent
-│       │   ├── tester.py          # Testing agent
-│       │   └── refiner.py         # Refinement agent
-│       ├── middleware/
-│       │   └── subagent.py        # SubAgent middleware
-│       ├── persistence/
-│       │   └── store.py           # Filesystem persistence
-│       └── examples/
-│           ├── basic_workflow.py
-│           └── custom_workflow.py
-├── requirements.txt
-├── setup.py
-└── README.md
+python examples/basic_usage.py
+python examples/advanced_analysis.py
 ```
 
 ## Development
 
-### Requirements
+### Running Tests
 
-- Python 3.9+
-- LangChain >= 0.1.0
-- LangGraph >= 0.0.20
-- Pydantic >= 2.0.0
-- aiosqlite >= 0.19.0
+```bash
+pytest tests/
+```
 
-### Contributing
+With coverage:
+```bash
+pytest --cov=deepagents tests/
+```
 
-Contributions are welcome! This is a foundational implementation that can be extended with:
+### Code Formatting
 
-- Integration with actual LLMs (Claude, GPT-4, etc.)
-- Real code execution capabilities
-- Advanced planning algorithms
-- More specialized agents
-- Web interface for workflow monitoring
-- Additional persistence backends
+```bash
+black deepagents/ tests/ examples/
+```
+
+### Linting
+
+```bash
+ruff check deepagents/ tests/ examples/
+```
+
+## Knowledge Graph Schema
+
+The system creates the following node types:
+
+- **Project**: Represents a software project
+- **File**: Source code files
+- **Function**: Function/method definitions
+- **Class**: Class definitions
+- **Module**: Code modules/packages
+- **Conversation**: Conversation episodes
+- **Entity**: Generic entities extracted from conversations
+
+Common relationships:
+- `CONTAINS`: Project contains files
+- `DEFINED_IN`: Code entity defined in a file
+- `CALLS`: Function calls another function
+- `INHERITS`: Class inheritance
+- `IMPORTS`: Module imports
+- `RELATES_TO`: Generic relationship between entities
+
+## Neo4j Browser
+
+Access the Neo4j browser at http://localhost:7474 to visualize your knowledge graph.
+
+Example Cypher queries:
+
+```cypher
+// View all projects
+MATCH (p:Project) RETURN p
+
+// View project structure
+MATCH (p:Project {name: 'my_project'})-[:CONTAINS]->(f:File)
+RETURN p, f
+
+// Find all functions in a file
+MATCH (f:File {name: 'auth.py'})-[:DEFINES]->(fn:Function)
+RETURN fn
+
+// View conversation history
+MATCH (c:Conversation)
+RETURN c ORDER BY c.timestamp DESC LIMIT 10
+```
+
+## Configuration
+
+Configuration can be provided via:
+1. Environment variables (`.env` file)
+2. Direct instantiation of `DeepAgentConfig`
+3. Default values
+
+Available configuration options:
+
+```python
+from deepagents import DeepAgentConfig
+
+config = DeepAgentConfig(
+    neo4j_uri="bolt://localhost:7687",
+    neo4j_username="neo4j",
+    neo4j_password="your_password",
+    anthropic_api_key="your_api_key",
+    max_iterations=10,
+    conversation_memory_window=20
+)
+```
+
+## API Reference
+
+### DeepAgent
+
+Main agent class for interacting with the knowledge graph.
+
+**Methods:**
+- `initialize()`: Initialize the agent and knowledge graph
+- `process_message(message, context)`: Process a conversation message
+- `set_project(name, description)`: Set the current project
+- `search_knowledge(query, limit)`: Search the knowledge graph
+- `get_project_summary()`: Get project statistics and context
+- `close()`: Close connections and cleanup
+
+### KnowledgeGraphManager
+
+Manages the knowledge graph using Graphiti and Neo4j.
+
+**Methods:**
+- `initialize()`: Initialize Graphiti
+- `add_conversation_episode(content, metadata)`: Add conversation to graph
+- `add_code_entity(type, name, properties, relationships)`: Add code entity
+- `search_knowledge(query, limit)`: Search for information
+- `get_project_context(project_name)`: Get project details
+- `add_project(name, description, metadata)`: Add a new project
+
+### Neo4jManager
+
+Low-level Neo4j connection management.
+
+**Methods:**
+- `connect()`: Connect to Neo4j
+- `close()`: Close connection
+- `execute_query(query, parameters)`: Execute Cypher query
+- `create_indexes()`: Create necessary indexes
+- `get_stats()`: Get database statistics
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - see LICENSE file for details
+This project is open source and available under the MIT License.
 
 ## Acknowledgments
 
-Built on concepts from:
-- LangChain's agent framework
-- LangGraph for agent orchestration
-- DeepAgents architecture patterns
-- Claude-Code agent design principles
+- Built with [LangChain](https://langchain.com/)
+- Powered by [Anthropic's Claude](https://www.anthropic.com/)
+- Graph database by [Neo4j](https://neo4j.com/)
+- Knowledge graph management by [Graphiti](https://github.com/getzep/graphiti)
